@@ -1,0 +1,403 @@
+{% comment %}
+Wholesale order widget for Custom Liquid
+Keeps table layout across desktop and mobile, linked to product variants.
+{% endcomment %}
+
+{% assign harness_product = all_products['엘리븐-하네스'] %}
+{% assign harness_variant = harness_product.variants | where: 'id', 51368488108164 | first %}
+{% assign harness_unit_price = harness_variant.price | default: 0 %}
+
+{% assign leash_product = all_products['엘리븐-리드줄'] %}
+{% assign leash_variant = leash_product.variants | where: 'id', 51368488403076 | first %}
+{% assign leash_unit_price = leash_variant.price | default: 0 %}
+
+{% assign collar_product = all_products['엘리븐-목줄'] %}
+{% assign collar_variant = collar_product.variants | where: 'id', 51368488501380 | first %}
+{% assign collar_unit_price = collar_variant.price | default: 0 %}
+
+<style>
+  #wholesale-order-widget {
+    max-width: 760px;
+    margin: 1rem auto;
+    font-family: inherit;
+    color: #1a1a1a;
+  }
+
+  .wholesale-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    table-layout: auto;
+  }
+
+  .wholesale-table th,
+  .wholesale-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  .wholesale-table th {
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+  }
+
+  .img-cell {
+    width: 92px;
+  }
+
+  .img-thumb {
+    width: 72px;
+    height: 72px;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .name-cell {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .product-title {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .price-cell,
+  .subtotal-cell {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .qty-cell {
+    text-align: center;
+  }
+
+  .unit-price-display {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .qty-input {
+    width: 88px;
+    height: 34px;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 15px;
+    text-align: center;
+    appearance: textfield;
+  }
+
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .subtotal-display {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .subtotal-number {
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .subtotal-currency {
+    font-size: 12px;
+    color: #8a8a8a;
+  }
+
+  .summary-divider {
+    height: 1px;
+    background: #e5e5e5;
+    margin-top: -1px;
+  }
+
+  .summary-row th,
+  .summary-row td {
+    border-bottom: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .summary-total {
+    font-weight: 700;
+  }
+
+  .checkout-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: #111;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 8px;
+    transition: background 0.2s ease, opacity 0.2s ease;
+  }
+
+  .checkout-btn:disabled {
+    cursor: not-allowed;
+    background: #c4c4c4;
+    color: #fff;
+    opacity: 0.85;
+  }
+
+  @media (max-width: 480px) {
+    #wholesale-order-widget {
+      padding: 0 4px;
+    }
+
+    .wholesale-table {
+      table-layout: fixed;
+    }
+
+    .wholesale-table th,
+    .wholesale-table td {
+      padding: 8px 6px;
+      font-size: 13px;
+    }
+
+    .img-cell {
+      width: 78px;
+    }
+
+    .img-thumb {
+      width: 72px;
+      height: 72px;
+    }
+
+    .product-title {
+      font-size: 14px;
+    }
+
+    .name-cell {
+      align-items: flex-start;
+    }
+
+    .price-cell,
+    .qty-cell,
+    .subtotal-cell {
+      padding-top: 6px;
+    }
+
+    .price-cell,
+    .subtotal-cell {
+      font-size: 13px;
+    }
+
+    .qty-input {
+      width: 80px;
+      height: 34px;
+      font-size: 14px;
+    }
+  }
+</style>
+
+<div id="wholesale-order-widget" class="wholesale-widget">
+  <table class="wholesale-table">
+    <thead>
+      <tr>
+        <th style="width: 92px;">이미지</th>
+        <th>상품명</th>
+        <th class="price-cell">단가</th>
+        <th class="qty-cell">수량</th>
+        <th class="subtotal-cell">소계</th>
+      </tr>
+    </thead>
+    <tbody id="wholesale-rows">
+      <tr class="product-row" data-variant-id="{{ harness_variant.id }}" data-unit-price="{{ harness_unit_price }}">
+        <td class="img-cell">
+          {% if harness_variant.image %}
+            <img class="img-thumb" src="{{ harness_variant.image | image_url: width: 220 }}" alt="{{ harness_product.title }}" />
+          {% elsif harness_product.featured_image %}
+            <img class="img-thumb" src="{{ harness_product.featured_image | image_url: width: 220 }}" alt="{{ harness_product.title }}" />
+          {% endif %}
+        </td>
+        <td class="name-cell">
+          <div class="product-title">{{ harness_product.title }}</div>
+        </td>
+        <td class="price-cell">
+          <span class="unit-price-display">{{ harness_variant.price | money }}</span>
+        </td>
+        <td class="qty-cell">
+          <input type="number" min="0" value="0" class="qty-input" inputmode="numeric" />
+        </td>
+        <td class="subtotal-cell">
+          <span class="subtotal-display">
+            <span class="subtotal-number">0</span>
+            <span class="subtotal-currency">원</span>
+          </span>
+        </td>
+      </tr>
+      <tr class="product-row" data-variant-id="{{ leash_variant.id }}" data-unit-price="{{ leash_unit_price }}">
+        <td class="img-cell">
+          {% if leash_variant.image %}
+            <img class="img-thumb" src="{{ leash_variant.image | image_url: width: 220 }}" alt="{{ leash_product.title }}" />
+          {% elsif leash_product.featured_image %}
+            <img class="img-thumb" src="{{ leash_product.featured_image | image_url: width: 220 }}" alt="{{ leash_product.title }}" />
+          {% endif %}
+        </td>
+        <td class="name-cell">
+          <div class="product-title">{{ leash_product.title }}</div>
+        </td>
+        <td class="price-cell">
+          <span class="unit-price-display">{{ leash_variant.price | money }}</span>
+        </td>
+        <td class="qty-cell">
+          <input type="number" min="0" value="0" class="qty-input" inputmode="numeric" />
+        </td>
+        <td class="subtotal-cell">
+          <span class="subtotal-display">
+            <span class="subtotal-number">0</span>
+            <span class="subtotal-currency">원</span>
+          </span>
+        </td>
+      </tr>
+      <tr class="product-row" data-variant-id="{{ collar_variant.id }}" data-unit-price="{{ collar_unit_price }}">
+        <td class="img-cell">
+          {% if collar_variant.image %}
+            <img class="img-thumb" src="{{ collar_variant.image | image_url: width: 220 }}" alt="{{ collar_product.title }}" />
+          {% elsif collar_product.featured_image %}
+            <img class="img-thumb" src="{{ collar_product.featured_image | image_url: width: 220 }}" alt="{{ collar_product.title }}" />
+          {% endif %}
+        </td>
+        <td class="name-cell">
+          <div class="product-title">{{ collar_product.title }}</div>
+        </td>
+        <td class="price-cell">
+          <span class="unit-price-display">{{ collar_variant.price | money }}</span>
+        </td>
+        <td class="qty-cell">
+          <input type="number" min="0" value="0" class="qty-input" inputmode="numeric" />
+        </td>
+        <td class="subtotal-cell">
+          <span class="subtotal-display">
+            <span class="subtotal-number">0</span>
+            <span class="subtotal-currency">원</span>
+          </span>
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="summary-row">
+        <th colspan="2">합계</th>
+        <td style="text-align: center;">총 수량: <span id="total-qty">0</span>개</td>
+        <td colspan="2" style="text-align: right;">
+          <span class="summary-total" id="total-price">0원</span>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="summary-divider"></div>
+
+  <button id="wholesale-checkout" class="checkout-btn" disabled>
+    한 번에 결제하기
+  </button>
+  <p id="wholesale-message" style="margin-top: 8px; color: #d00; display: none;"></p>
+</div>
+
+<script>
+(function() {
+  const widget = document.getElementById('wholesale-order-widget');
+  if (!widget) return;
+
+  const rows = Array.from(widget.querySelectorAll('#wholesale-rows tr'));
+  const totalQtyEl = widget.querySelector('#total-qty');
+  const totalPriceEl = widget.querySelector('#total-price');
+  const messageEl = widget.querySelector('#wholesale-message');
+  const checkoutBtn = widget.querySelector('#wholesale-checkout');
+
+  const formatNumber = (num) => new Intl.NumberFormat('ko-KR').format(num);
+
+  function recalc() {
+    let totalQty = 0;
+    let totalPrice = 0;
+
+    rows.forEach((row) => {
+      const unitPrice = Number(row.dataset.unitPrice || 0);
+      const qtyInput = row.querySelector('.qty-input');
+      const qty = Math.max(0, Number(qtyInput.value || 0));
+      qtyInput.value = qty;
+
+      const subtotal = unitPrice * qty;
+      const subtotalNumberEl = row.querySelector('.subtotal-number');
+      if (subtotalNumberEl) {
+        subtotalNumberEl.textContent = formatNumber(subtotal);
+      }
+
+      totalQty += qty;
+      totalPrice += subtotal;
+    });
+
+    totalQtyEl.textContent = totalQty;
+    totalPriceEl.textContent = formatNumber(totalPrice) + '원';
+    checkoutBtn.disabled = totalQty === 0;
+  }
+
+  rows.forEach((row) => {
+    const qtyInput = row.querySelector('.qty-input');
+    qtyInput.addEventListener('input', recalc);
+    qtyInput.addEventListener('change', recalc);
+  });
+
+  async function handleCheckout() {
+    messageEl.style.display = 'none';
+
+    const items = rows
+      .map((row) => {
+        const qty = Math.max(0, Number(row.querySelector('.qty-input').value || 0));
+        return qty > 0 ? { id: Number(row.dataset.variantId), quantity: qty } : null;
+      })
+      .filter(Boolean);
+
+    if (items.length === 0) {
+      messageEl.textContent = '담을 상품 수량을 입력해 주세요.';
+      messageEl.style.display = 'block';
+      return;
+    }
+
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = '처리 중...';
+
+    try {
+      const res = await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      });
+
+      if (!res.ok) {
+        throw new Error('장바구니 추가에 실패했습니다.');
+      }
+
+      window.location.href = '/checkout';
+    } catch (err) {
+      messageEl.textContent = err.message || '요청 중 문제가 발생했습니다.';
+      messageEl.style.display = 'block';
+    } finally {
+      checkoutBtn.disabled = rows.every((row) => Number(row.querySelector('.qty-input').value || 0) === 0);
+      checkoutBtn.textContent = '한 번에 결제하기';
+      recalc();
+    }
+  }
+
+  checkoutBtn.addEventListener('click', handleCheckout);
+
+  recalc();
+})();
+</script>
